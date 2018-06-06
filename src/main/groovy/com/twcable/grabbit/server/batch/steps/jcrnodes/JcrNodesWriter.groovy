@@ -20,6 +20,7 @@ import com.twcable.grabbit.proto.NodeProtos
 import com.twcable.grabbit.server.batch.ServerBatchJobContext
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
+import org.apache.commons.lang3.StringUtils
 import org.springframework.batch.core.ItemWriteListener
 import org.springframework.batch.item.ItemWriter
 
@@ -61,6 +62,7 @@ class JcrNodesWriter implements ItemWriter<NodeProtos.Node>, ItemWriteListener {
     @Override
     void onWriteError(Exception exception, List items) {
         log.error "Exception occurred while writing the current chunk", exception
+        log.warn "Items where the error occurred are: \n" + StringUtils.join(items, "\n======================\n");
     }
 
 
