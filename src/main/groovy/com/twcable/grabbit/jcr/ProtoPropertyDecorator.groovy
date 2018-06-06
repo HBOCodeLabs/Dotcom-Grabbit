@@ -23,10 +23,14 @@ import groovy.util.logging.Slf4j
 import javax.annotation.Nonnull
 import javax.jcr.Node as JCRNode
 import javax.jcr.PropertyType
+import javax.jcr.RepositoryException
 import javax.jcr.Value
 import javax.jcr.ValueFormatException
 import org.apache.jackrabbit.value.ValueFactoryImpl
 
+import javax.jcr.lock.LockException
+import javax.jcr.nodetype.ConstraintViolationException
+import javax.jcr.version.VersionException
 
 import static org.apache.jackrabbit.JcrConstants.JCR_MIXINTYPES
 import static org.apache.jackrabbit.JcrConstants.JCR_PRIMARYTYPE
@@ -60,6 +64,9 @@ class ProtoPropertyDecorator {
             else {
                 node.setProperty(this.name, getPropertyValue(), this.type)
             }
+        }
+        catch (VersionException|LockException|ConstraintViolationException|RepositoryException e) {
+            log.error "Exception occurred trying to save properties on a node\n${e}"
         }
         catch (ValueFormatException ex) {
             //We do this for the case were Grabbit attempts to write a property of a type different from the type already written i.e String vs String[]
