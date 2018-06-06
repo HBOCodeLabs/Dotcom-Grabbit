@@ -17,7 +17,7 @@
 package com.twcable.grabbit.client.batch.steps.jcrnodes
 
 import com.twcable.grabbit.client.batch.ClientBatchJobContext
-import javax.jcr.InvalidItemStateException
+
 import com.twcable.grabbit.jcr.ProtoNodeDecorator
 import com.twcable.grabbit.proto.NodeProtos.Node as ProtoNode
 import groovy.transform.CompileStatic
@@ -27,8 +27,16 @@ import org.springframework.batch.core.ItemWriteListener
 import org.springframework.batch.item.ItemWriter
 import org.springframework.util.StopWatch
 
+import javax.jcr.AccessDeniedException
+import javax.jcr.InvalidItemStateException
+import javax.jcr.ItemExistsException
+import javax.jcr.ReferentialIntegrityException
+import javax.jcr.RepositoryException
 import javax.jcr.Session
+import javax.jcr.lock.LockException
 import javax.jcr.nodetype.ConstraintViolationException
+import javax.jcr.nodetype.NoSuchNodeTypeException
+import javax.jcr.version.VersionException
 
 /**
  * A Custom ItemWriter that will write the provided Jcr Nodes to the {@link JcrNodesWriter#theSession()}
@@ -54,11 +62,10 @@ class JcrNodesWriter implements ItemWriter<ProtoNode>, ItemWriteListener {
         }.flatten()}"""
         try {
             theSession().save()
-        } catch (InvalidItemStateException e) {
-            log.warn "InvalidItemStateException occurred.\n${e}"
-        } catch (ConstraintViolationException e) {
-            log.warn "ConstraintViolationExcpetion occurred.\n${e}"
+        } catch(InvalidItemStateException|ConstraintViolationException|AccessDeniedException|ItemExistsException|ReferentialIntegrityException|VersionException|LockException|NoSuchNodeTypeException|RepositoryException e){
+            log.error("Exception occurred when trying to save nodes on the client\n${e}")
         }
+
         withStopWatch("Refreshing session: ${theSession()}") {
             theSession().refresh(false)
         }
