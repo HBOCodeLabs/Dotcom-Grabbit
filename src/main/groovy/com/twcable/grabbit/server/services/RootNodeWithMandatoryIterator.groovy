@@ -19,6 +19,7 @@ package com.twcable.grabbit.server.services
 import com.twcable.grabbit.jcr.JCRNodeDecorator
 import groovy.transform.CompileStatic
 import groovy.transform.TailRecursive
+import groovy.util.logging.Slf4j
 
 import javax.jcr.Node as JcrNode
 
@@ -27,6 +28,7 @@ import javax.jcr.Node as JcrNode
  * taking into account cases where a node (rootNode node or any of the children) has any number of
  * mandatory subnodes
  */
+@Slf4j
 @CompileStatic
 final class RootNodeWithMandatoryIterator implements Iterator<JcrNode> {
 
@@ -62,6 +64,7 @@ final class RootNodeWithMandatoryIterator implements Iterator<JcrNode> {
             return rootNode
         }
 
+
         if(immediateChildren.hasNext()) {
             return immediateChildren.next()
         }
@@ -77,7 +80,14 @@ final class RootNodeWithMandatoryIterator implements Iterator<JcrNode> {
 
 
     private static Collection<JCRNodeDecorator> getNonMandatoryChildren(final JCRNodeDecorator node) {
-        node.getImmediateChildNodes().findAll { !it.isMandatoryNode() }
+        Collection<JCRNodeDecorator> nonMandatoryChildren = null;
+
+        try {
+            nonMandatoryChildren = node.getImmediateChildNodes().findAll { !it.isMandatoryNode() }
+        } catch (Exception e) {
+            log.error "Exception occurred trying to get non-mandatory children: ${e}"
+        }
+        return nonMandatoryChildren
     }
 
 
@@ -89,8 +99,13 @@ final class RootNodeWithMandatoryIterator implements Iterator<JcrNode> {
 
         final mandatoryNodes = currentNode.getRequiredChildNodes()
 
-        return mandatoryNodes.collectMany { JCRNodeDecorator mandatoryNode ->
-            return getMandatoryChildren(mandatoryNode, (nodesToAdd << mandatoryNode))
+        try {
+            return mandatoryNodes.collectMany { JCRNodeDecorator mandatoryNode ->
+                return getMandatoryChildren(mandatoryNode, (nodesToAdd << mandatoryNode))
+            }
+        } catch (Exception e) {
+            log.error "Exception occurred attempting to tail recurse through children: ${e}"
         }
+        return mandatoryNodes
     }
 }

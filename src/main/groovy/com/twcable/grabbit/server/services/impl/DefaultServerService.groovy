@@ -27,7 +27,6 @@ import org.apache.felix.scr.annotations.Component
 import org.apache.felix.scr.annotations.Reference
 import org.apache.felix.scr.annotations.Service
 import org.apache.jackrabbit.commons.NamespaceHelper
-import org.apache.jackrabbit.commons.flat.TreeTraverser
 import org.apache.sling.jcr.api.SlingRepository
 import org.springframework.context.ConfigurableApplicationContext
 
@@ -61,30 +60,33 @@ class DefaultServerService implements ServerService {
         if (excludePaths == null) excludePaths = (Collection<String>) Collections.EMPTY_LIST
         if (servletOutputStream == null) throw new IllegalStateException("servletOutputStream == null")
 
-        JcrUtil.withSession(slingRepository, serverUsername) { Session session ->
-            Iterator<JcrNode> nodeIterator
+        try {
+            JcrUtil.withSession(slingRepository, serverUsername) { Session session ->
+                Iterator<JcrNode> nodeIterator
 
-            //If the path is of type "/a/b/.", that means we should not do a recursive search of b's children
-            //We should stop after getting all the children of b
-            if (path.split("/").last() == ".") {
-                final String actualPath = path.substring(0, path.length() - 2)
-                final JcrNode rootNode = session.getNode(actualPath)
-                nodeIterator = new RootNodeWithMandatoryIterator(rootNode)
+                //If the path is of type "/a/b/.", that means we should not do a recursive search of b's children
+                //We should stop after getting all the children of b
+                if (path.split("/").last() == ".") {
+                    final String actualPath = path.substring(0, path.length() - 2)
+                    final JcrNode rootNode = session.getNode(actualPath)
+                    nodeIterator = new RootNodeWithMandatoryIterator(rootNode)
+                } else {
+                    final JcrNode rootNode = session.getNode(path)
+                    nodeIterator = TreeTraverser.nodeIterator(rootNode)
+                }
+
+                //Iterator wrapper for excludePaths exclusions
+                nodeIterator = new ExcludePathNodeIterator(nodeIterator, excludePaths)
+
+                ServerBatchJob batchJob = new ServerBatchJob.ConfigurationBuilder(configurableApplicationContext)
+                        .andConfiguration(new NamespaceHelper(session).namespaces.iterator(), nodeIterator, servletOutputStream)
+                        .andPath(path, excludePaths)
+                        .andContentAfterDate(afterDateString)
+                        .build()
+                batchJob.run()
             }
-            else {
-                final JcrNode rootNode = session.getNode(path)
-                nodeIterator = TreeTraverser.nodeIterator(rootNode)
-            }
-
-            //Iterator wrapper for excludePaths exclusions
-            nodeIterator = new ExcludePathNodeIterator(nodeIterator, excludePaths)
-
-            ServerBatchJob batchJob = new ServerBatchJob.ConfigurationBuilder(configurableApplicationContext)
-                .andConfiguration(new NamespaceHelper(session).namespaces.iterator(), nodeIterator, servletOutputStream)
-                .andPath(path, excludePaths)
-                .andContentAfterDate(afterDateString)
-                .build()
-            batchJob.run()
+        } catch (Exception e) {
+            log.error "Exception occurred attempting to create session for job run. e=${e}"
         }
     }
 }

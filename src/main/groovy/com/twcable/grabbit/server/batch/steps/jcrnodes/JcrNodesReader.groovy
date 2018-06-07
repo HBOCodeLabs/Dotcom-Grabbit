@@ -41,7 +41,9 @@ class JcrNodesReader implements ItemReader<JcrNode> {
         if (nodeIterator == null) throw new IllegalStateException("nodeIterator must be set.")
         try {
             if (nodeIterator.hasNext()) {
-                nodeIterator.next()
+                JcrNode jcrNode = nodeIterator.next()
+                log.debug "jcrNode.path=${jcrNode.getPath()}"
+                return jcrNode
             } else {
                 null
             }

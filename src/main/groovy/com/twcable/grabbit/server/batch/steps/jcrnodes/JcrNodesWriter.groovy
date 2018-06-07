@@ -42,9 +42,21 @@ class JcrNodesWriter implements ItemWriter<NodeProtos.Node>, ItemWriteListener {
         if (servletOutputStream == null) throw new IllegalStateException("servletOutputStream must be set.")
 
         try {
+            //log.info "\n\n### NodeProtos ###\n\n${StringUtils.join(nodeProtos.toString(), "\n")}"
             nodeProtos.each { NodeProtos.Node node ->
-                log.debug "Sending NodeProto : ${node}"
-                node.writeDelimitedTo(servletOutputStream)
+                log.debug "Sending NodeProto : ${node.getName()}"
+                if (log.isDebugEnabled()) {
+                    log.debug "NodeProto.serializedSize=${node.getSerializedSize()}"
+                }
+                if (log.isTraceEnabled()) {
+                    log.trace "Sending NodeProto : ${node}"
+                }
+                try {
+                    node.writeDelimitedTo(servletOutputStream)
+                    log.info("write : after sending nodeProto to outputstream")
+                } catch (Exception e2) {
+                    log.error "Exception occurred writing node delimited to outputstream. e=${e2}"
+                }
             }
         } catch (Exception e) {
             log.error "Exception occurred writing to the outputstream: ${e}"
@@ -59,6 +71,7 @@ class JcrNodesWriter implements ItemWriter<NodeProtos.Node>, ItemWriteListener {
 
     @Override
     void afterWrite(List items) {
+        log.info "afterWrite() : about to flush"
         theServletOutputStream().flush()
     }
 

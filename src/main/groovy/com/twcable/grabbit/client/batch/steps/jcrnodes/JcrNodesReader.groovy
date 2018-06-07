@@ -37,11 +37,19 @@ class JcrNodesReader implements ItemReader<ProtoNode> {
 
     @Override
     NodeProtos.Node read() throws Exception, UnexpectedInputException, ParseException, NonTransientResourceException {
-        ProtoNode nodeProto = ProtoNode.parseDelimitedFrom(theInputStream())
-        if (!nodeProto) {
-            log.info "Received all data from Server"
-            return null
+        ProtoNode nodeProto
+        try {
+            log.trace "JcrNodesReader.read() : START"
+            nodeProto = ProtoNode.parseDelimitedFrom(theInputStream())
+            if (!nodeProto) {
+                log.info "Received all data from Server"
+                return null
+            }
+        } catch (Exception e) {
+            log.error "Exception occurred parsing from the inputStream\n${e}"
         }
+        log.debug "read() : NodeProto: \n${nodeProto.name}"
+
         return nodeProto
     }
 

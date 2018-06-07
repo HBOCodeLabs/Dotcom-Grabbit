@@ -51,15 +51,17 @@ class JcrNodesWriter implements ItemWriter<ProtoNode>, ItemWriteListener {
     @Override
     void beforeWrite(List nodeProtos) {
         //no-op
+        log.trace "beforeWrite() : About to write on the client some nodeProtos"
     }
 
 
     @Override
     void afterWrite(List nodeProtos) {
         log.info "Saving ${nodeProtos.size()} nodes"
-        log.debug """Saving Nodes : ${(nodeProtos as List<ProtoNode>).collectMany { ProtoNode pNode ->
-            [ pNode.name , pNode.mandatoryChildNodeList.collect { it.name - pNode.name }]
-        }.flatten()}"""
+        if (log.isDebugEnabled()) {
+            log.debug """Saving Nodes : ${(nodeProtos as List<ProtoNode>).collectMany { ProtoNode pNode ->
+            [ pNode.name , pNode.mandatoryChildNodeList.collect { it.name - pNode.name }]}.flatten()}"""
+        }
         try {
             theSession().save()
         } catch(InvalidItemStateException|ConstraintViolationException|AccessDeniedException|ItemExistsException|ReferentialIntegrityException|VersionException|LockException|NoSuchNodeTypeException|RepositoryException e){
@@ -75,7 +77,11 @@ class JcrNodesWriter implements ItemWriter<ProtoNode>, ItemWriteListener {
     @Override
     void onWriteError(Exception exception, List nodeProtos) {
         log.error "Exception writing JCR Nodes to current JCR Session : ${theSession()}. ", exception
-        log.warn "Items where the error occurred are: \n" + StringUtils.join(nodeProtos, "\n======================\n");
+        StringBuilder sb = new StringBuilder();
+        for (Object nodeProto : nodeProtos) {
+            sb.append(((ProtoNode)nodeProto).name).append("\n=================\n");
+        }
+        log.warn("Items where the error occurred are: \n" + sb.toString());
     }
 
 
@@ -85,8 +91,10 @@ class JcrNodesWriter implements ItemWriter<ProtoNode>, ItemWriteListener {
      */
     @Override
     void write(List<? extends ProtoNode> nodeProtos) throws Exception {
+        log.trace "client write() : START"
         Session session = theSession()
         for (ProtoNode nodeProto : nodeProtos) {
+            log.debug "writeToJcr : nodeProto=${nodeProto.name}"
             writeToJcr(nodeProto, session)
         }
     }

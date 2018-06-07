@@ -70,7 +70,14 @@ class JcrNodesProcessor implements ItemProcessor<JcrNode, ProtoNode> {
         } else {
             // Build parent node
             log.debug "Build parent node..."
-            return decoratedNode.toProtoNode()
+            ProtoNode protoNode
+            try {
+                protoNode = decoratedNode.toProtoNode()
+                log.info "after building parent node. Have the protoNode ready"
+            } catch (Exception e) {
+                log.error "Exception occurred saving to protoNode\n${e}"
+            }
+            return protoNode
         }
     }
 
