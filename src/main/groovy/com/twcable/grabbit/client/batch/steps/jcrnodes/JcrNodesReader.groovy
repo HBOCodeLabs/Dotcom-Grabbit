@@ -46,7 +46,7 @@ class JcrNodesReader implements ItemReader<ProtoNode> {
                 return null
             }
         } catch (Exception e) {
-            log.error "Exception occurred parsing from the inputStream\n${e}"
+            log.error "Exception occurred parsing from the inputStream\n${e}", e
         }
         log.debug "read() : NodeProto: \n${nodeProto.name}"
 

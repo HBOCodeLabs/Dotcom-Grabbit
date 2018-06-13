@@ -55,11 +55,11 @@ class JcrNodesWriter implements ItemWriter<NodeProtos.Node>, ItemWriteListener {
                     node.writeDelimitedTo(servletOutputStream)
                     log.info("write : after sending nodeProto to outputstream")
                 } catch (Exception e2) {
-                    log.error "Exception occurred writing node delimited to outputstream. e=${e2}"
+                    log.error "Exception occurred writing node delimited to outputstream. e=${e2}", e2
                 }
             }
         } catch (Exception e) {
-            log.error "Exception occurred writing to the outputstream: ${e}"
+            log.error "Exception occurred writing to the outputstream: ${e}", e
         }
     }
 

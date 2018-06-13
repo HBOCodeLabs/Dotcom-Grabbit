@@ -48,7 +48,7 @@ class JcrNodesReader implements ItemReader<JcrNode> {
                 null
             }
         } catch (Exception e) {
-            log.error "Exception occurred reading nodes: ${e}"
+            log.error "Exception occurred reading nodes: ${e}", e
         }
     }
 

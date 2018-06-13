@@ -66,7 +66,7 @@ class JcrNodesWriter implements ItemWriter<ProtoNode>, ItemWriteListener {
             theSession().save()
 //        } catch(InvalidItemStateException|ConstraintViolationException|AccessDeniedException|ItemExistsException|ReferentialIntegrityException|VersionException|LockException|NoSuchNodeTypeException|RepositoryException e){
         } catch (Exception e) {
-            log.error("Exception occurred when trying to save nodes on the client\n${e}")
+            log.error("Exception occurred when trying to save nodes on the client\n${e}", e)
         }
 
         withStopWatch("Refreshing session: ${theSession()}") {

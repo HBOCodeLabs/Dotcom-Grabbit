@@ -84,7 +84,7 @@ class JcrPropertyDecorator {
                 log.debug "name=${name}, type=BINARY, byteString.size=${byteString.size()}"
                 propertyBuilder.addValues(valueBuilder.setBytesValue(byteString))
             } catch (Exception e) {
-                log.error "Exception occurred reading the binary value\n${e}"
+                log.error "Exception occurred reading the binary value\n${e}", e
             }
         }
         else {
@@ -96,7 +96,7 @@ class JcrPropertyDecorator {
                     propertyBuilder.addValues(valueBuilder.setStringValue(value.string))
                 }
             } catch (Exception e) {
-                log.error "Exception occurred reading from other type\n${e}"
+                log.error "Exception occurred reading from other type\n${e}", e
             }
         }
         propertyBuilder.setMultiple(multiple)

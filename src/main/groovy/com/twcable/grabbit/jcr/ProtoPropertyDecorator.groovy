@@ -84,7 +84,7 @@ class ProtoPropertyDecorator {
                 log.warn "WARNING!  Property ${name} will not be written to ${node.name}!  There was a problem when writing value type ${PropertyType.nameFromValue(type)}${multiple ? '[]' : ''} to existing node with same type, due to a ValueFormatException, and we were unable to recover"
             }
         } catch (Exception e) {
-            log.error "Exception occurred trying to save properties on a node\n${e}"
+            log.error "Exception occurred trying to save properties on a node\n${e}", e
         }
     }
 
