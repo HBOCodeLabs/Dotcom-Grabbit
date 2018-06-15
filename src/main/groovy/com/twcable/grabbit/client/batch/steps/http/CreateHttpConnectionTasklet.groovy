@@ -84,6 +84,11 @@ class CreateHttpConnectionTasklet implements Tasklet {
                 .url(getPostURLForRequest(jobParameters))
                 .addHeader('Authorization', Credentials.basic(username, password))
                 .build()
+//        final Request request = new RequestBuilder()
+//                .url(getURLForRequest(jobParameters))
+//                .addHeader('Authorization', Credentials.basic(username, password))
+//                .build()
+
 
         final OkHttpClient client = getNewHttpClient()
 
