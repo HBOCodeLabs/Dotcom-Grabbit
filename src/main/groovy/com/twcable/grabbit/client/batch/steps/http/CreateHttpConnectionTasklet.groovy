@@ -23,6 +23,12 @@ import groovy.util.logging.Slf4j
 import okhttp3.*
 import okhttp3.OkHttpClient.Builder as HttpClientBuilder
 import okhttp3.Request.Builder as RequestBuilder
+import org.apache.http.HttpEntity
+import org.apache.http.entity.AbstractHttpEntity
+import org.apache.http.entity.StringEntity
+import org.apache.sling.commons.json.JSONArray
+import org.apache.sling.commons.json.JSONException
+import org.apache.sling.commons.json.JSONObject
 import org.springframework.batch.core.ExitStatus
 import org.springframework.batch.core.StepContribution
 import org.springframework.batch.core.scope.context.ChunkContext
@@ -69,21 +75,59 @@ class CreateHttpConnectionTasklet implements Tasklet {
 
 
     Connection createConnection(@Nonnull final Map jobParameters) {
+        log.info "createConnection : START"
 
         final String username = (String)jobParameters.get(ClientBatchJob.SERVER_USERNAME)
         final String password = (String)jobParameters.get(ClientBatchJob.SERVER_PASSWORD)
 
-        final Request request = new RequestBuilder()
-                .url(getURLForRequest(jobParameters))
+        final Request request = new RequestBuilder().post(formatRequestBody(jobParameters))
+                .url(getPostURLForRequest(jobParameters))
                 .addHeader('Authorization', Credentials.basic(username, password))
                 .build()
-
 
         final OkHttpClient client = getNewHttpClient()
 
         final Response response = client.newCall(request).execute()
+        log.info "createConnection : response=${response}"
+        log.info "createConnection : body=${response.body()}"
         //We return response information in a connection like this because it's clear, but also because Response is a final class that we can not easily mock
         return new Connection(response.body().byteStream(), response.networkResponse(), response.code())
+    }
+
+    /**
+     * Format the JSON request body to send the params of the invalidationPath
+     * @param invalidationPath
+     * @return
+     */
+    private RequestBody formatRequestBody(@Nonnull final Map jobParameters) {
+        try {
+            //addQueryParameter will encode these values for us
+            String path = (String)jobParameters.get(ClientBatchJob.PATH)
+            String after = (String)jobParameters.get(ClientBatchJob.CONTENT_AFTER_DATE) ?: '';
+
+            final String excludePathParam = jobParameters.get(ClientBatchJob.EXCLUDE_PATHS)
+            final excludePaths = (excludePathParam != null && !excludePathParam.isEmpty() ? excludePathParam.split(/\*/) : Collections.EMPTY_LIST) as Collection<String>
+            List<String> excludePathsList = new ArrayList<>()
+            for(String excludePath : excludePaths) {
+                excludePathsList.add(excludePath)
+            }
+
+            JSONObject json = new JSONObject();
+            json.put("path", path);
+            json.put("after", after);
+
+            JSONArray excludePathsArray = new JSONArray(excludePathsList);
+
+            json.put("excludePaths", excludePathsArray);
+
+            RequestBody requestBody = RequestBody.create(MediaType.parse("application/json"), json.toString());
+            return requestBody;
+        } catch (IOException ioe) {
+            log.error(ioe.getMessage(), ioe);
+        } catch (JSONException e) {
+            log.error("Exception occurred forming JSON", e);
+        }
+        return null;
     }
 
 
@@ -104,6 +148,17 @@ class CreateHttpConnectionTasklet implements Tasklet {
         for(String excludePath : excludePaths) {
             urlBuilder.addQueryParameter('excludePath', excludePath)
         }
+
+        return urlBuilder.build()
+    }
+
+    HttpUrl getPostURLForRequest(@Nonnull final Map jobParameters) {
+        HttpUrlBuilder urlBuilder = new HttpUrl.Builder()
+
+        urlBuilder.scheme((String)jobParameters.get(ClientBatchJob.SCHEME))
+        urlBuilder.host((String)jobParameters.get(ClientBatchJob.HOST))
+        urlBuilder.port(Integer.parseInt((String)jobParameters.get(ClientBatchJob.PORT)))
+        urlBuilder.encodedPath('/grabbit/content')
 
         return urlBuilder.build()
     }

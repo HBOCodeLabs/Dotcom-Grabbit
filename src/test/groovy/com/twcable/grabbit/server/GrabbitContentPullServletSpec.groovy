@@ -18,6 +18,7 @@ package com.twcable.grabbit.server
 import com.twcable.grabbit.server.services.ServerService
 import org.apache.sling.api.SlingHttpServletRequest
 import org.apache.sling.api.SlingHttpServletResponse
+import org.junit.Ignore
 import spock.lang.Specification
 import spock.lang.Subject
 
