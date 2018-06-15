@@ -20,6 +20,7 @@ import com.twcable.grabbit.proto.NodeProtos
 import com.twcable.grabbit.server.batch.ServerBatchJobContext
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
+import org.apache.commons.lang3.StringUtils
 import org.springframework.batch.core.ItemWriteListener
 import org.springframework.batch.item.ItemWriter
 
@@ -40,9 +41,25 @@ class JcrNodesWriter implements ItemWriter<NodeProtos.Node>, ItemWriteListener {
         ServletOutputStream servletOutputStream = theServletOutputStream()
         if (servletOutputStream == null) throw new IllegalStateException("servletOutputStream must be set.")
 
-        nodeProtos.each { NodeProtos.Node node ->
-            log.debug "Sending NodeProto : ${node}"
-            node.writeDelimitedTo(servletOutputStream)
+        try {
+            //log.info "\n\n### NodeProtos ###\n\n${StringUtils.join(nodeProtos.toString(), "\n")}"
+            nodeProtos.each { NodeProtos.Node node ->
+                log.debug "Sending NodeProto : ${node.getName()}"
+                if (log.isDebugEnabled()) {
+                    log.debug "NodeProto.serializedSize=${node.getSerializedSize()}"
+                }
+                if (log.isTraceEnabled()) {
+                    log.trace "Sending NodeProto : ${node}"
+                }
+                try {
+                    node.writeDelimitedTo(servletOutputStream)
+                    log.info("write : after sending nodeProto to outputstream")
+                } catch (Exception e2) {
+                    log.error "Exception occurred writing node delimited to outputstream. e=${e2}", e2
+                }
+            }
+        } catch (Exception e) {
+            log.error "Exception occurred writing to the outputstream: ${e}", e
         }
     }
 
@@ -54,6 +71,7 @@ class JcrNodesWriter implements ItemWriter<NodeProtos.Node>, ItemWriteListener {
 
     @Override
     void afterWrite(List items) {
+        log.info "afterWrite() : about to flush"
         theServletOutputStream().flush()
     }
 
@@ -61,6 +79,7 @@ class JcrNodesWriter implements ItemWriter<NodeProtos.Node>, ItemWriteListener {
     @Override
     void onWriteError(Exception exception, List items) {
         log.error "Exception occurred while writing the current chunk", exception
+        log.warn "Items where the error occurred are: \n" + StringUtils.join(items, "\n======================\n");
     }
 
 

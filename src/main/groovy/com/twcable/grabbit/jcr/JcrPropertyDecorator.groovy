@@ -77,13 +77,26 @@ class JcrPropertyDecorator {
         propertyBuilder.setName(name)
 
         if(type == BINARY) {
-            propertyBuilder.addValues(valueBuilder.setBytesValue(ByteString.readFrom(value.binary.stream)))
+            try {
+//                ByteString byteString = ByteString.readFrom(value.binary.stream, 268435456);
+                //ByteString byteString = ByteString.readFrom(value.binary.stream, 134217728);
+                ByteString byteString = ByteString.readFrom(value.binary.stream);
+                log.debug "name=${name}, type=BINARY, byteString.size=${byteString.size()}"
+                propertyBuilder.addValues(valueBuilder.setBytesValue(byteString))
+            } catch (Exception e) {
+                log.error "Exception occurred reading the binary value\n${e}", e
+            }
         }
         else {
-            //Other property types can potentially have multiple values
-            final Value[] values = multiple ? values : [value] as Value[]
-            values.each { Value value ->
-                propertyBuilder.addValues(valueBuilder.setStringValue(value.string))
+            try {
+                //Other property types can potentially have multiple values
+                final Value[] values = multiple ? values : [value] as Value[]
+                values.each { Value value ->
+                    log.debug "name=${name}, type=OTHER, value.string.size=${value.string.size()}"
+                    propertyBuilder.addValues(valueBuilder.setStringValue(value.string))
+                }
+            } catch (Exception e) {
+                log.error "Exception occurred reading from other type\n${e}", e
             }
         }
         propertyBuilder.setMultiple(multiple)

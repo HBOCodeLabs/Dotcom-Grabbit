@@ -20,6 +20,7 @@ import com.google.common.collect.ImmutableMap
 import com.twcable.grabbit.util.CryptoUtil
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
+import org.apache.commons.lang3.builder.ToStringBuilder
 import org.yaml.snakeyaml.Yaml
 
 import javax.annotation.Nonnull
@@ -110,7 +111,7 @@ class GrabbitConfiguration {
 
         if (errorBuilder.hasErrors()) throw errorBuilder.build()
 
-        return new GrabbitConfiguration(
+        GrabbitConfiguration config = new GrabbitConfiguration(
             serverUsername,
             serverPassword,
             serverScheme,
@@ -119,6 +120,10 @@ class GrabbitConfiguration {
             deltaContent,
             pathConfigurations.asImmutable()
         )
+
+        log.info "# GrabbitConfiguration #\n${config}"
+
+        return config
     }
 
     private static final Pattern prePattern = Pattern.compile(/^(\/|\.\/|\\).*$/)
@@ -269,4 +274,8 @@ class GrabbitConfiguration {
         }
     }
 
+    @Override
+    public String toString() {
+        return ToStringBuilder.reflectionToString(this);
+    }
 }

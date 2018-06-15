@@ -18,25 +18,24 @@ package com.twcable.grabbit.jcr
 import com.twcable.grabbit.proto.NodeProtos.Node as ProtoNode
 import com.twcable.grabbit.proto.NodeProtos.Node.Builder as ProtoNodeBuilder
 import com.twcable.grabbit.proto.NodeProtos.Property as ProtoProperty
+import com.twcable.grabbit.server.services.impl.TreeTraverser
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import javax.annotation.Nonnull
 import javax.annotation.Nullable
 import javax.jcr.ItemNotFoundException
+import javax.jcr.Node
 import javax.jcr.Node as JCRNode
 import javax.jcr.PathNotFoundException
 import javax.jcr.Property as JcrProperty
 import javax.jcr.RepositoryException
 import javax.jcr.nodetype.ItemDefinition
-import org.apache.jackrabbit.commons.flat.TreeTraverser
 import org.apache.jackrabbit.value.DateValue
 
 
 import static org.apache.jackrabbit.JcrConstants.JCR_CREATED
 import static org.apache.jackrabbit.JcrConstants.JCR_LASTMODIFIED
 import static org.apache.jackrabbit.JcrConstants.JCR_PRIMARYTYPE
-import static org.apache.jackrabbit.commons.flat.TreeTraverser.ErrorHandler
-import static org.apache.jackrabbit.commons.flat.TreeTraverser.InclusionPolicy
 import static org.apache.jackrabbit.oak.spi.security.authorization.accesscontrol.AccessControlConstants.AC_NODETYPE_NAMES
 import static org.apache.jackrabbit.oak.spi.security.authorization.accesscontrol.AccessControlConstants.NT_REP_ACL
 
@@ -84,7 +83,7 @@ class JCRNodeDecorator {
 
 
     Iterator<JCRNode> getChildNodeIterator() {
-        return TreeTraverser.nodeIterator(innerNode, ErrorHandler.IGNORE, new NoRootInclusionPolicy(this))
+        return TreeTraverser.nodeIterator(innerNode, TreeTraverser.ErrorHandler.ALL, new NoRootInclusionPolicy(this) as TreeTraverser.InclusionPolicy<? super Node>)
     }
 
 
@@ -158,7 +157,9 @@ class JCRNodeDecorator {
      ProtoNode toProtoNode() {
         final ProtoNodeBuilder protoNodeBuilder = ProtoNode.newBuilder()
         protoNodeBuilder.setName(path)
+        log.trace "toProtoNode() : about to collect all properties"
         protoNodeBuilder.addAllProperties(getProtoProperties())
+        log.trace "toProtoNode() : collected all properties"
         requiredChildNodes.each {
             protoNodeBuilder.addMandatoryChildNode(it.toProtoNode())
         }
@@ -268,7 +269,7 @@ class JCRNodeDecorator {
     }
 
     @CompileStatic
-    private static class NoRootInclusionPolicy implements InclusionPolicy<JCRNode> {
+    private static class NoRootInclusionPolicy implements TreeTraverser.InclusionPolicy<JCRNode> {
 
         final JCRNodeDecorator rootNode
 

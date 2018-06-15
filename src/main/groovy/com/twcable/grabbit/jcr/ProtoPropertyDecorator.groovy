@@ -23,10 +23,14 @@ import groovy.util.logging.Slf4j
 import javax.annotation.Nonnull
 import javax.jcr.Node as JCRNode
 import javax.jcr.PropertyType
+import javax.jcr.RepositoryException
 import javax.jcr.Value
 import javax.jcr.ValueFormatException
 import org.apache.jackrabbit.value.ValueFactoryImpl
 
+import javax.jcr.lock.LockException
+import javax.jcr.nodetype.ConstraintViolationException
+import javax.jcr.version.VersionException
 
 import static org.apache.jackrabbit.JcrConstants.JCR_MIXINTYPES
 import static org.apache.jackrabbit.JcrConstants.JCR_PRIMARYTYPE
@@ -61,6 +65,9 @@ class ProtoPropertyDecorator {
                 node.setProperty(this.name, getPropertyValue(), this.type)
             }
         }
+//        catch (VersionException|LockException|ConstraintViolationException|RepositoryException e) {
+//            log.error "Exception occurred trying to save properties on a node\n${e}"
+//        }
         catch (ValueFormatException ex) {
             //We do this for the case were Grabbit attempts to write a property of a type different from the type already written i.e String vs String[]
             //Get the problem property already set on the node
@@ -68,15 +75,16 @@ class ProtoPropertyDecorator {
 
             log.debug "Failure initially setting property ${name} with type: ${PropertyType.nameFromValue(type)}${multiple ? '[]' : ''} to existing property with type: ${PropertyType.nameFromValue(existingProperty.type)}${existingProperty.multiple ? '[]' : ''}.  Trying to resolve..."
             //If the type is different than what we expect to write, or the cardinality is different; remove what is already written, and retry
-            if(existingProperty.type != this.type || existingProperty.multiple ^ this.multiple) {
+            if (existingProperty.type != this.type || existingProperty.multiple ^ this.multiple) {
                 existingProperty.remove()
                 node.session.save()
                 this.writeToNode(node)
                 log.debug "Resolve successful..."
-            }
-            else {
+            } else {
                 log.warn "WARNING!  Property ${name} will not be written to ${node.name}!  There was a problem when writing value type ${PropertyType.nameFromValue(type)}${multiple ? '[]' : ''} to existing node with same type, due to a ValueFormatException, and we were unable to recover"
             }
+        } catch (Exception e) {
+            log.error "Exception occurred trying to save properties on a node\n${e}", e
         }
     }
 

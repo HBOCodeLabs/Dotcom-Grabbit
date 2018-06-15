@@ -53,6 +53,7 @@ class JcrNodesProcessor implements ItemProcessor<JcrNode, ProtoNode> {
             final Date afterDate = DateUtil.getDateFromISOString(contentAfterDate)
             log.debug "ContentAfterDate received : ${afterDate}. Will ignore content created or modified before the afterDate"
             final date = decoratedNode.getModifiedOrCreatedDate()
+            log.debug "jcrNode=${jcrNode.getPath()}\nafterDate=${afterDate}\ncreated or modified date=${date}"
             if (date && date.before(afterDate)) { //if there are no date properties, we treat nodes as new
                 log.debug "Not sending any data older than ${afterDate}"
                 return null
@@ -61,10 +62,22 @@ class JcrNodesProcessor implements ItemProcessor<JcrNode, ProtoNode> {
 
         // Skip some nodes because they have already been processed by their parent
         if(decoratedNode.isMandatoryNode() || decoratedNode.isAuthorizablePart() || decoratedNode.isACPart()) {
+            log.debug "Skip some nodes because they have already been processed by their parent\ndecoratedNode" +
+                    ".isMandatoryNode=${decoratedNode.isMandatoryNode()}\ndecoratedNode.isAuthorizablePart()" +
+                    "=${decoratedNode.isAuthorizablePart()}\ndecoratedNode.isACPart()=${decoratedNode.isACPart()}"
+
             return null
         } else {
             // Build parent node
-            return decoratedNode.toProtoNode()
+            log.debug "Build parent node..."
+            ProtoNode protoNode
+            try {
+                protoNode = decoratedNode.toProtoNode()
+                log.info "after building parent node. Have the protoNode ready"
+            } catch (Exception e) {
+                log.error "Exception occurred saving to protoNode\n${e}", e
+            }
+            return protoNode
         }
     }
 

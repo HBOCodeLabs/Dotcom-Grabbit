@@ -17,16 +17,26 @@
 package com.twcable.grabbit.client.batch.steps.jcrnodes
 
 import com.twcable.grabbit.client.batch.ClientBatchJobContext
-import com.twcable.grabbit.jcr.JCRNodeDecorator
+
 import com.twcable.grabbit.jcr.ProtoNodeDecorator
 import com.twcable.grabbit.proto.NodeProtos.Node as ProtoNode
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
+import org.apache.commons.lang3.StringUtils
 import org.springframework.batch.core.ItemWriteListener
 import org.springframework.batch.item.ItemWriter
 import org.springframework.util.StopWatch
 
+import javax.jcr.AccessDeniedException
+import javax.jcr.InvalidItemStateException
+import javax.jcr.ItemExistsException
+import javax.jcr.ReferentialIntegrityException
+import javax.jcr.RepositoryException
 import javax.jcr.Session
+import javax.jcr.lock.LockException
+import javax.jcr.nodetype.ConstraintViolationException
+import javax.jcr.nodetype.NoSuchNodeTypeException
+import javax.jcr.version.VersionException
 
 /**
  * A Custom ItemWriter that will write the provided Jcr Nodes to the {@link JcrNodesWriter#theSession()}
@@ -41,16 +51,24 @@ class JcrNodesWriter implements ItemWriter<ProtoNode>, ItemWriteListener {
     @Override
     void beforeWrite(List nodeProtos) {
         //no-op
+        log.trace "beforeWrite() : About to write on the client some nodeProtos"
     }
 
 
     @Override
     void afterWrite(List nodeProtos) {
         log.info "Saving ${nodeProtos.size()} nodes"
-        log.debug """Saving Nodes : ${(nodeProtos as List<ProtoNode>).collectMany { ProtoNode pNode ->
-            [ pNode.name , pNode.mandatoryChildNodeList.collect { it.name - pNode.name }]
-        }.flatten()}"""
-        theSession().save()
+        if (log.isDebugEnabled()) {
+            log.debug """Saving Nodes : ${(nodeProtos as List<ProtoNode>).collectMany { ProtoNode pNode ->
+            [ pNode.name , pNode.mandatoryChildNodeList.collect { it.name - pNode.name }]}.flatten()}"""
+        }
+        try {
+            theSession().save()
+//        } catch(InvalidItemStateException|ConstraintViolationException|AccessDeniedException|ItemExistsException|ReferentialIntegrityException|VersionException|LockException|NoSuchNodeTypeException|RepositoryException e){
+        } catch (Exception e) {
+            log.error("Exception occurred when trying to save nodes on the client\n${e}", e)
+        }
+
         withStopWatch("Refreshing session: ${theSession()}") {
             theSession().refresh(false)
         }
@@ -60,6 +78,11 @@ class JcrNodesWriter implements ItemWriter<ProtoNode>, ItemWriteListener {
     @Override
     void onWriteError(Exception exception, List nodeProtos) {
         log.error "Exception writing JCR Nodes to current JCR Session : ${theSession()}. ", exception
+        StringBuilder sb = new StringBuilder();
+        for (Object nodeProto : nodeProtos) {
+            sb.append(((ProtoNode)nodeProto).name).append("\n=================\n");
+        }
+        log.warn("Items where the error occurred are: \n" + sb.toString());
     }
 
 
@@ -69,8 +92,10 @@ class JcrNodesWriter implements ItemWriter<ProtoNode>, ItemWriteListener {
      */
     @Override
     void write(List<? extends ProtoNode> nodeProtos) throws Exception {
+        log.trace "client write() : START"
         Session session = theSession()
         for (ProtoNode nodeProto : nodeProtos) {
+            log.debug "writeToJcr : nodeProto=${nodeProto.name}"
             writeToJcr(nodeProto, session)
         }
     }
