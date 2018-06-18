@@ -17,6 +17,8 @@
 package com.twcable.grabbit.server.services
 
 import groovy.transform.CompileStatic
+import groovy.util.logging.Slf4j
+
 import javax.jcr.Node as JcrNode
 
 /**
@@ -24,6 +26,7 @@ import javax.jcr.Node as JcrNode
  * Accounts for cases where certain paths(i.e nodes) needs to be excluded.
  */
 @CompileStatic
+@Slf4j
 final class ExcludePathNodeIterator implements Iterator<JcrNode> {
 
     private Iterator<JcrNode> nodeIterator
@@ -53,6 +56,9 @@ final class ExcludePathNodeIterator implements Iterator<JcrNode> {
     }
 
     private boolean isPathInExcludedList(String path) {
-        return excludePathList.any { path.startsWith(it) }
+        boolean result = excludePathList.any { path.startsWith(it + "/") || path.equals(it) }
+
+        log.debug "isPathInExcludedList() : path={}, result={}", path, result
+        return result
     }
 }

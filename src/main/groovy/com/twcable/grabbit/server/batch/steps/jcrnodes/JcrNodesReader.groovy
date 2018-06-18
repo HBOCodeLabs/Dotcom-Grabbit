@@ -42,8 +42,10 @@ class JcrNodesReader implements ItemReader<JcrNode> {
         try {
             if (nodeIterator.hasNext()) {
                 JcrNode jcrNode = nodeIterator.next()
-                log.debug "jcrNode.path=${jcrNode.getPath()}"
-                return jcrNode
+                if (jcrNode != null) {
+                    log.debug "jcrNode.path={}", jcrNode.getPath()
+                    return jcrNode
+                }
             } else {
                 null
             }
