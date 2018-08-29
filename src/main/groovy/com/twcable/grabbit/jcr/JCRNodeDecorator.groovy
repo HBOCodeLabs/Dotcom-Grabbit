@@ -35,6 +35,7 @@ import org.apache.jackrabbit.value.DateValue
 
 import static org.apache.jackrabbit.JcrConstants.JCR_CREATED
 import static org.apache.jackrabbit.JcrConstants.JCR_LASTMODIFIED
+import static org.apache.jackrabbit.JcrConstants.JCR_PRIMARYITEMNAME
 import static org.apache.jackrabbit.JcrConstants.JCR_PRIMARYTYPE
 import static org.apache.jackrabbit.oak.spi.security.authorization.accesscontrol.AccessControlConstants.AC_NODETYPE_NAMES
 import static org.apache.jackrabbit.oak.spi.security.authorization.accesscontrol.AccessControlConstants.NT_REP_ACL
@@ -120,6 +121,8 @@ class JCRNodeDecorator {
 
 
     String getPrimaryType() {
+        if (innerNode == null || innerNode.getProperty(JCR_PRIMARYTYPE) == null)
+            return ""
         innerNode.getProperty(JCR_PRIMARYTYPE).string
     }
 
@@ -202,6 +205,7 @@ class JCRNodeDecorator {
      */
     boolean isAuthorizablePart() {
         try {
+            if (getParent() == null) return false
             JCRNodeDecorator parent = new JCRNodeDecorator(getParent())
             while(!parent.isAuthorizableType()) {
                 parent = new JCRNodeDecorator(parent.getParent())

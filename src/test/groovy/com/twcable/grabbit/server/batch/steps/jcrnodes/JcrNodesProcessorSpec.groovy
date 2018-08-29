@@ -359,7 +359,6 @@ class JcrNodesProcessorSpec extends Specification {
         propList = aJcrNode.properties.toList().findAll {it.name != JcrConstants.JCR_PRIMARYTYPE}.collectEntries { [(it.name): new DateTime(it.value.date.time.time)]}
     }
 
-    @Ignore('TODO: Skip for now in order to build the project')
     def "A mandatory node is not processed"() {
         given:
         final JcrNode node = Mock(JcrNode) {
@@ -378,7 +377,6 @@ class JcrNodesProcessorSpec extends Specification {
         result == null
     }
 
-    @Ignore('TODO: Skip for now in order to build the project')
     def "An authorizable part is not processed"() {
         given:
         final JcrNode node = Mock(JcrNode) {
