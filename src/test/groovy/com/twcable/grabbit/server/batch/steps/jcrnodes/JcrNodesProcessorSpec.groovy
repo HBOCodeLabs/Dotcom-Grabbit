@@ -20,7 +20,6 @@ import com.twcable.grabbit.proto.NodeProtos.Node as ProtoNode
 import com.twcable.grabbit.proto.NodeProtos.Property as ProtoProperty
 import com.twcable.jackalope.NodeBuilder as FakeNodeBuilder
 import com.twcable.jackalope.impl.jcr.ValueImpl
-import spock.lang.Ignore
 
 import javax.jcr.ItemNotFoundException
 import javax.jcr.Node as JcrNode

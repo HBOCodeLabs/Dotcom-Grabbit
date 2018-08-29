@@ -35,7 +35,6 @@ import org.apache.jackrabbit.value.DateValue
 
 import static org.apache.jackrabbit.JcrConstants.JCR_CREATED
 import static org.apache.jackrabbit.JcrConstants.JCR_LASTMODIFIED
-import static org.apache.jackrabbit.JcrConstants.JCR_PRIMARYITEMNAME
 import static org.apache.jackrabbit.JcrConstants.JCR_PRIMARYTYPE
 import static org.apache.jackrabbit.oak.spi.security.authorization.accesscontrol.AccessControlConstants.AC_NODETYPE_NAMES
 import static org.apache.jackrabbit.oak.spi.security.authorization.accesscontrol.AccessControlConstants.NT_REP_ACL
