@@ -23,6 +23,9 @@ import spock.lang.Subject
 
 import javax.servlet.ServletOutputStream
 
+import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST
+import static javax.servlet.http.HttpServletResponse.SC_OK
+
 @Subject(GrabbitContentPullServlet)
 class GrabbitContentPullServletSpec extends Specification {
 
