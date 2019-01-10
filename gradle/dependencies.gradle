@@ -23,12 +23,6 @@ dependencies {
     }
     compile "org.apache.servicemix.bundles:org.apache.servicemix.bundles.okio:${okio_version}"
 
-    compile "org.apache.httpcomponents:httpcore-osgi:${apache_httpcore_version}"
-    compile "org.apache.httpcomponents:httpclient-osgi:${apache_httpclient_version}"
-
-    // JSON Commons Library
-    compile "org.apache.sling:org.apache.sling.commons.json:${sling_commons_json_version}"
-
     // Apache Sling libraries
     compile "org.apache.sling:org.apache.sling.api:${sling_api_version}"
     compile "org.apache.sling:org.apache.sling.jcr.base:${sling_base_version}"

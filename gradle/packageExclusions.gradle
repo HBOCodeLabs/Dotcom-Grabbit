@@ -39,15 +39,6 @@ configurations.cq_package {
     exclude group: 'org.apache.sling', module:'org.apache.sling.jcr.resource'
     exclude group: 'org.apache.sling', module: 'org.apache.sling.jcr.api'
 
-    // Exclude the Sling Commons JSON Library
-    exclude group: 'org.apache.sling', module: 'org.apache.sling.commons.json'
-
-    // HTTP Core OSGI
-    // 4.4.8
-    exclude group: 'org.apache.httpcomponents', module: 'httpcore-osgi'
-    // 4.5.4
-    exclude group: 'org.apache.httpcomponents', module: 'httpclient-osgi'
-
     // 6.x exclude bundles
     exclude group: 'com.google.guava', module: 'guava'
     exclude module: 'cq-workflow-console'

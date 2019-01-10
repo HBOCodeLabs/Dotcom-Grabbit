@@ -23,12 +23,6 @@ import groovy.util.logging.Slf4j
 import okhttp3.*
 import okhttp3.OkHttpClient.Builder as HttpClientBuilder
 import okhttp3.Request.Builder as RequestBuilder
-import org.apache.http.HttpEntity
-import org.apache.http.entity.AbstractHttpEntity
-import org.apache.http.entity.StringEntity
-import org.apache.sling.commons.json.JSONArray
-import org.apache.sling.commons.json.JSONException
-import org.apache.sling.commons.json.JSONObject
 import org.springframework.batch.core.ExitStatus
 import org.springframework.batch.core.StepContribution
 import org.springframework.batch.core.scope.context.ChunkContext
@@ -84,11 +78,6 @@ class CreateHttpConnectionTasklet implements Tasklet {
                 .url(getPostURLForRequest(jobParameters))
                 .addHeader('Authorization', Credentials.basic(username, password))
                 .build()
-//        final Request request = new RequestBuilder()
-//                .url(getURLForRequest(jobParameters))
-//                .addHeader('Authorization', Credentials.basic(username, password))
-//                .build()
-
 
         final OkHttpClient client = getNewHttpClient()
 
@@ -117,20 +106,21 @@ class CreateHttpConnectionTasklet implements Tasklet {
                 excludePathsList.add(excludePath)
             }
 
-            JSONObject json = new JSONObject();
-            json.put("path", path);
-            json.put("after", after);
+            def jsonBuilder = new groovy.json.JsonBuilder()
 
-            JSONArray excludePathsArray = new JSONArray(excludePathsList);
+            def map = [:]
+            map["path"] = path
+            after["after"] = after
+            excludePaths["excludePaths"] = excludePathsList
 
-            json.put("excludePaths", excludePathsArray);
+            jsonBuilder {
+                map
+            }
 
-            RequestBody requestBody = RequestBody.create(MediaType.parse("application/json"), json.toString());
+            RequestBody requestBody = RequestBody.create(MediaType.parse("application/json"), jsonBuilder.toString());
             return requestBody;
         } catch (IOException ioe) {
             log.error(ioe.getMessage(), ioe);
-        } catch (JSONException e) {
-            log.error("Exception occurred forming JSON", e);
         }
         return null;
     }

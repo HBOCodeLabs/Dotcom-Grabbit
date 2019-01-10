@@ -78,8 +78,6 @@ class JcrPropertyDecorator {
 
         if(type == BINARY) {
             try {
-//                ByteString byteString = ByteString.readFrom(value.binary.stream, 268435456);
-                //ByteString byteString = ByteString.readFrom(value.binary.stream, 134217728);
                 ByteString byteString = ByteString.readFrom(value.binary.stream);
                 log.debug "name=${name}, type=BINARY, byteString.size=${byteString.size()}"
                 propertyBuilder.addValues(valueBuilder.setBytesValue(byteString))

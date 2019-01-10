@@ -16,6 +16,7 @@
 package com.twcable.grabbit.server
 
 import com.twcable.grabbit.server.services.ServerService
+import groovy.json.JsonSlurper
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import org.apache.commons.lang3.StringUtils
@@ -24,10 +25,6 @@ import org.apache.felix.scr.annotations.sling.SlingServlet
 import org.apache.sling.api.SlingHttpServletRequest
 import org.apache.sling.api.SlingHttpServletResponse
 import org.apache.sling.api.servlets.SlingAllMethodsServlet
-import org.apache.sling.api.servlets.SlingSafeMethodsServlet
-import org.apache.sling.commons.json.JSONArray
-import org.apache.sling.commons.json.JSONException;
-import org.apache.sling.commons.json.JSONObject;
 
 import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST
 import static javax.servlet.http.HttpServletResponse.SC_OK
@@ -40,7 +37,7 @@ import static javax.servlet.http.HttpServletResponse.SC_OK
  */
 @Slf4j
 @CompileStatic
-@SlingServlet(methods = ['GET','POST'], resourceTypes = ['twcable:grabbit/content'])
+@SlingServlet(methods = ['POST'], resourceTypes = ['twcable:grabbit/content'])
 class GrabbitContentPullServlet extends SlingAllMethodsServlet {
 
     @Reference(bind = 'setServerService')
@@ -72,39 +69,39 @@ class GrabbitContentPullServlet extends SlingAllMethodsServlet {
                 sb.append(s);
             }
 
-            JSONObject jsonObject = null;
+            def jsonSlurper = new JsonSlurper()
+            Map jsonObject = null
 
             try {
-                jsonObject = new JSONObject(sb.toString());
-            } catch (JSONException e) {
+                jsonObject = (Map)jsonSlurper.parseText(sb.toString())
+            } catch (Exception e) {
                 log.error("Exception occurred trying to read string into json object", e);
             }
 
-            log.debug "jsonObject={}", jsonObject
+            log.info "jsonObject={}", jsonObject
 
-            if (!jsonObject.has("path") || jsonObject.get("path") == null) {
+            if (!jsonObject.path) {
                 log.info "jsonObject doesn't contain path"
                 response.status = SC_BAD_REQUEST
                 response.writer.write("No path provided for content!")
                 return
+            } else {
+                log.info "jsonObject.path=" + jsonObject.path
             }
 
-            final String path = jsonObject.get("path")
+            final String path = jsonObject.path
 
             log.debug "path={}", path
 
             String afterDateString = "";
-            if (jsonObject.has("after")) {
-                afterDateString = jsonObject.get("after")
+            if (jsonObject.after) {
+                afterDateString = jsonObject.after
             }
             log.debug "afterDateString={}", afterDateString
 
             List<String> excludePathsList = new ArrayList<>();
-            if (jsonObject.has("excludePaths")) {
-                JSONArray excludedPathsJSONArray = jsonObject.getJSONArray("excludePaths");
-                for (int i = 0; i < excludedPathsJSONArray.length(); i++) {
-                    excludePathsList.add((String) excludedPathsJSONArray.get(i));
-                }
+            if (jsonObject.excludePaths) {
+                excludePathsList = (List<String>) jsonObject.excludePaths
             }
             log.debug "excludePathsList={}", StringUtils.join(excludePathsList, ",")
 
@@ -126,52 +123,5 @@ class GrabbitContentPullServlet extends SlingAllMethodsServlet {
         } catch (Exception e) {
             log.error "Exception occurred processing the request", e;
         }
-    }
-
-    /**
-     * This GET request starts a stream of Grabbit content. The servlet looks for several query parameters related
-     * to a stream.
-     *
-     * <ul>
-     *     <li><b>path</b> is the URL encoded path to the content on the server to be streamed. This is required.
-     *     <li><b>excludePath</b> is a URL encoded sub-path to exclude from the stream. This can have multiple values. It is not required.
-     *     <li><b>after</b> is a URL encoded ISO-8601 date that is used to stream delta content. It is not required.
-     * </ul>
-     *
-     * {@link GrabbitContentPullServlet} will use the request remote user credentials to authenticate against the server JCR.
-     *
-     * @param request The request to process.
-     * @param response Our response to the request.
-     */
-    @Override
-    void doGet(SlingHttpServletRequest request, SlingHttpServletResponse response) {
-        log.trace "Received a get method"
-
-        final path = request.getParameter("path")
-        if(!path) {
-            response.status = SC_BAD_REQUEST
-            response.writer.write("No path provided for content!")
-            return
-        }
-        final excludePaths = request.getParameterValues("excludePath")
-
-        final decodedPath = URLDecoder.decode(path, "utf-8")
-        final decodedExcludePaths = excludePaths.collect { String ep -> URLDecoder.decode(ep, 'UTF-8') }
-        response.contentType = "application/octet-stream"
-        response.status = SC_OK
-
-        final afterDateString = URLDecoder.decode(request.getParameter("after") ?: "", "utf-8")
-
-        if(afterDateString) {
-            log.info "Path : $decodedPath, Exclude Paths: $decodedExcludePaths, " +
-                    "AfterDate String : $afterDateString. Will send only delta content."
-        }
-
-        //The Login of the user making this request.
-        //This user will be used to connect to JCR.
-        //If the User is null, 'anonymous' will be used to connect to JCR.
-        final serverUsername = request.remoteUser
-        serverService.getContentForRootPath(serverUsername, decodedPath, decodedExcludePaths ?: null,
-                afterDateString ?: null, response.outputStream)
     }
 }

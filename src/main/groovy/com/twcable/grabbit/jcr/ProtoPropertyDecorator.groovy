@@ -65,9 +65,6 @@ class ProtoPropertyDecorator {
                 node.setProperty(this.name, getPropertyValue(), this.type)
             }
         }
-//        catch (VersionException|LockException|ConstraintViolationException|RepositoryException e) {
-//            log.error "Exception occurred trying to save properties on a node\n${e}"
-//        }
         catch (ValueFormatException ex) {
             //We do this for the case were Grabbit attempts to write a property of a type different from the type already written i.e String vs String[]
             //Get the problem property already set on the node
