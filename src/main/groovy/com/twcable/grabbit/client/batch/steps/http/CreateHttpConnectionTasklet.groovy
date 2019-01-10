@@ -17,6 +17,7 @@ package com.twcable.grabbit.client.batch.steps.http
 
 import com.twcable.grabbit.client.batch.ClientBatchJob
 import com.twcable.grabbit.client.batch.ClientBatchJobContext
+import groovy.json.JsonBuilder
 import groovy.transform.Canonical
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
@@ -106,12 +107,17 @@ class CreateHttpConnectionTasklet implements Tasklet {
                 excludePathsList.add(excludePath)
             }
 
-            def jsonBuilder = new groovy.json.JsonBuilder()
+            def jsonBuilder = new JsonBuilder()
 
             def map = [:]
-            map["path"] = path
-            after["after"] = after
-            excludePaths["excludePaths"] = excludePathsList
+            map.path = path
+            map.after = after
+            map.excludePaths = excludePathsList
+
+//            Map map = new HashMap();
+//            map.put("path", path);
+//            map.put("after", after);
+//            map.put("excludePaths", excludePathsList);
 
             jsonBuilder {
                 map
